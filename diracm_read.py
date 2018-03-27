@@ -33,12 +33,33 @@ class dirac_mulliken_orbitals:
         self.sym=[] #list of the symmetries of orbitals
         self.energy=[] #list of the energies of orbitals
         self.occ_no=[] #list of the occupation number
-        self.character=[] #list of the orbital characters
-        self.occ=[] #list of the orbital occupation
+        self.character=[] #list of the orbital characters, with the orbital characters being a list of individual orbital components
+        self.occ=[] #list of the orbital occupationm, with the orbital occupation being a list of individual orbital components
         # group evergything
         self.group=[self.num,self.sym,self.energy,self.occ_no,self.character,self.occ]
         # assign values
         self.group=list(input_lt)
+    
+    def print_options(self):
+        '''Print all of the variables in an order, num -> sym -> energy -> occ_no -> character -> occ
+           This function needs to have more functionality.
+        '''
+        for a1,a2,a3,a4,a5,a6 in zip(self.num,self.sym,self.energy,self.occ_no,self.character,self.occ):
+            print a1,a2,a3,a4,a5,a6
+def find_MOs(lines):
+    """
+    to find the start and end lines of a Mulliken orbital print in a molpro output, 
+    return the start and end lines' indices, 
+    return empty list if no MO has been found
+    """
+    indices_lt=[]
+    for i in range(0,len(lines)):
+        if lines[i].strip() in startofmo:
+            indices_lt.append(i)
+        if lines[i].strip() in endofmo:
+            indices_lt.append(i)
+            break
+    return indices_lt
 
 def extract_and_process_raw_MOs(txt):
     """
@@ -46,7 +67,40 @@ def extract_and_process_raw_MOs(txt):
     standardize the the raw MO data and create an instance of dirac_mulliken_orbitals class,
     return the instance
     """
- 
+    indices_lt=find_MOs(txt)
+    instance=[]
+    raw_MO=txt[indices_lt[0]-1:indices_lt[1]]
+    MO_instance=process_one_raw_MOs(raw_MO)
+    return MO_instance
+
+def process_one_raw_MOs(txt):
+    """
+    to process one unprocessed raw Mulliken MOs, create the variable for the dirac_mulliken_orbitals class and return dirac_mulliken_orbitals class instance
+    """
+    lt_of_num = []
+    lt_of_sym = []
+    lt_of_energy = []
+    lt_of_occ_no = []
+    lt_of_charater = []
+    lt_of_occ = []
+    flag = 0 "This is used for charater and occ read being contineous."
+    for line in txt:
+        line = line.strip()
+        if "* Electronic eigenvalue" in line:
+            flag = flag + 1
+            line_lt = line.split()
+            lt_of_num.append(line_lt[line_lt.index('no.')+1].strip(':'))
+            lt_of_sym.append(line_lt[line_lt.index('sym=')+1].strip())
+            lt_of_energy.append(line_lt[line_lt.index('no.')+2].strip(':'))
+            lt_of_occ_no.append(line_lt[line_lt.index('f')+2].strip(':'))
+        if "Gross" and "|" in line:
+            line_lt = filter(lambda x: x!='',line.split('|')[1].split('  '))
+        if flag == 2:
+            flag = 0
+            lt_of_charater.append()
+            lt_of_occ.append()
+    return dirac_mulliken_orbitals(lt_of_num,lt_of_sym,lt_of_energy,lt_of_occ_no,lt_of_charater,lt_of_occ)
+
 # end of the class and function definitions
 ##############################################################################################################################
 import sys
@@ -59,29 +113,11 @@ else:
 txt=open(txt)
 lines=txt.readlines()
 
-processed_MOs_lt=extract_and_process_raw_MOs(lines)
-
 if len(sys.argv) > 2:
     thresh=sys.argv[2]
 else:
-    thresh = float(raw_input("threshhold(recommended value:0.05)> "))
+    thresh = float(raw_input("threshold(recommended value:0.05)> "))  # This threshold is for orbital occupation, when say 5f-2 occupation is greater than the threshold, it will be printed.
 
 # Reprocessing from raw data to organised standard output
-
-print "There are " + str(len(processed_MOs_lt)) + " MO orbitals loaded..."
-choose= raw_input(" MOs to print\n Example --- second and fifth : 2 , 5\n         --- all of the orbitals : all or leave blank\n> ")
-tmplist=[str(k+1) for k in xrange(len(processed_MOs_lt))]
-if len(choose.strip())==0 or 'all' in choose:
-    for item in processed_MOs_lt:
-        if processed_MOs_lt.index(item)!=0:
-            print '\n\n'
-            print '   Next set of MOs'
-        item.print_MOs(thresh)
-else:        
-    for k in xrange(len(processed_MOs_lt)):
-        if input_error(choose,tmplist):
-            print "Check your choice of printed orbitals, there might be an error ...\nExit ..."
-            sys.exit()
-        elif str(k+1) in choose.split(','):
-            processed_MOs_lt[k].print_MOs(thresh)
-
+instance_MOs_lt=extract_and_process_raw_MOs(lines)    
+instance_MOs_lt.print_options()
