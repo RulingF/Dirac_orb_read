@@ -34,9 +34,10 @@ class dirac_mulliken_orbitals:
         self.energy=[] #list of the energies of orbitals
         self.occ_no=[] #list of the occupation number
         self.character=[] #list of the orbital characters, with the orbital characters being a list of individual orbital components
-        self.occ=[] #list of the orbital occupationm, with the orbital occupation being a list of individual orbital components
+        self.occ_alpha=[] #list of the orbital occupationm, with the orbital occupation being a list of individual orbital components
+        self.occ_beta=[]
         # group evergything
-        self.group=[self.num,self.sym,self.energy,self.occ_no,self.character,self.occ]
+        self.group=[self.num,self.sym,self.energy,self.occ_no,self.character,self.occ_alpha,self.occ_beta]
         # assign values
         self.group=list(input_lt)
     
@@ -44,8 +45,8 @@ class dirac_mulliken_orbitals:
         '''Print all of the variables in an order, num -> sym -> energy -> occ_no -> character -> occ
            This function needs to have more functionality.
         '''
-        for a1,a2,a3,a4,a5,a6 in zip(self.num,self.sym,self.energy,self.occ_no,self.character,self.occ):
-            print a1,a2,a3,a4,a5,a6
+        for a1,a2,a3,a4,a5,a6,a7 in zip(self.num,self.sym,self.energy,self.occ_no,self.character,self.occ_alpha,self.occ_beta):
+            print a1,a2,a3,a4,a5,a6,a7
 def find_MOs(lines):
     """
     to find the start and end lines of a Mulliken orbital print in a molpro output, 
@@ -82,8 +83,9 @@ def process_one_raw_MOs(txt):
     lt_of_energy = []
     lt_of_occ_no = []
     lt_of_charater = []
-    lt_of_occ = []
-    flag = 0 "This is used for charater and occ read being contineous."
+    lt_of_occ_alpha = []
+    lt_of_occ_beta = []
+    flag = 0 #"This is used for orbital charater and occ read being contineous."
     for line in txt:
         line = line.strip()
         if "* Electronic eigenvalue" in line:
@@ -94,11 +96,22 @@ def process_one_raw_MOs(txt):
             lt_of_energy.append(line_lt[line_lt.index('no.')+2].strip(':'))
             lt_of_occ_no.append(line_lt[line_lt.index('f')+2].strip(':'))
         if "Gross" and "|" in line:
+            tmp_charater_lt = []
             line_lt = filter(lambda x: x!='',line.split('|')[1].split('  '))
+            tmp_charater_lt = tmp_charater_lt + line_lt
+        if "alpha" and "|" in line:
+            tmp_occ_alpha_lt = []
+            line_lt = filter(lambda x: x!='',line.split('|')[1].split('  '))
+            tmp_occ_alpha_lt = tmp_occ_alpha_lt + line_lt
+        if "beta" and "|" in line:
+            tmp_occ_beta_lt = []
+            line_lt = filter(lambda x: x!='',line.split('|')[1].split('  '))
+            tmp_occ_beta_lt = tmp_occ_beta_lt + line_lt
         if flag == 2:
             flag = 0
-            lt_of_charater.append()
-            lt_of_occ.append()
+            lt_of_charater.append(tmp_character_lt)
+            lt_of_occ_alpha.append(tmp_occ_alpha_lt)
+            lt_of_occ_beta.append(tmp_occ_beta_lt)
     return dirac_mulliken_orbitals(lt_of_num,lt_of_sym,lt_of_energy,lt_of_occ_no,lt_of_charater,lt_of_occ)
 
 # end of the class and function definitions
