@@ -70,8 +70,9 @@ def extract_and_process_raw_MOs(txt):
     """
     indices_lt=find_MOs(txt)
     instance=[]
-    raw_MO=txt[indices_lt[0]-1:indices_lt[1]]
-    MO_instance=process_one_raw_MOs(raw_MO)
+    raw_MO = txt[indices_lt[0]-1:indices_lt[1]]
+    MO_instance = process_one_raw_MOs(raw_MO)
+    print MO_instance.num
     return MO_instance
 
 def process_one_raw_MOs(txt):
@@ -82,37 +83,43 @@ def process_one_raw_MOs(txt):
     lt_of_sym = []
     lt_of_energy = []
     lt_of_occ_no = []
-    lt_of_charater = []
+    lt_of_character = []
     lt_of_occ_alpha = []
     lt_of_occ_beta = []
-    flag = 0 #"This is used for orbital charater and occ read being contineous."
-    for line in txt:
+    flag = 0
+    for line in txt[:100]:
+        line = line.replace('no.','no. ')
         line = line.strip()
         if "* Electronic eigenvalue" in line:
-            flag = flag + 1
             line_lt = line.split()
             lt_of_num.append(line_lt[line_lt.index('no.')+1].strip(':'))
-            lt_of_sym.append(line_lt[line_lt.index('sym=')+1].strip())
+            try:
+                lt_of_sym.append(line_lt[line_lt.index('sym=')+1].strip())
+            except ValueError:
+                lt_of_sym.append(line_lt[line_lt.index('m_j=')+1].strip())
             lt_of_energy.append(line_lt[line_lt.index('no.')+2].strip(':'))
             lt_of_occ_no.append(line_lt[line_lt.index('f')+2].strip(':'))
-        if "Gross" and "|" in line:
-            tmp_charater_lt = []
+        if "Gross" in line and "|" in line:
+            tmp_character_lt = []
             line_lt = filter(lambda x: x!='',line.split('|')[1].split('  '))
-            tmp_charater_lt = tmp_charater_lt + line_lt
-        if "alpha" and "|" in line:
+            tmp_character_lt = tmp_character_lt + line_lt
+        if "alpha" in line and "|" in line:
             tmp_occ_alpha_lt = []
             line_lt = filter(lambda x: x!='',line.split('|')[1].split('  '))
             tmp_occ_alpha_lt = tmp_occ_alpha_lt + line_lt
-        if "beta" and "|" in line:
+        if "beta" in line and "|" in line:
             tmp_occ_beta_lt = []
             line_lt = filter(lambda x: x!='',line.split('|')[1].split('  '))
             tmp_occ_beta_lt = tmp_occ_beta_lt + line_lt
         if flag == 2:
             flag = 0
-            lt_of_charater.append(tmp_character_lt)
+            lt_of_character.append(tmp_character_lt)
             lt_of_occ_alpha.append(tmp_occ_alpha_lt)
             lt_of_occ_beta.append(tmp_occ_beta_lt)
-    return dirac_mulliken_orbitals(lt_of_num,lt_of_sym,lt_of_energy,lt_of_occ_no,lt_of_charater,lt_of_occ)
+            print lt_of_occ_alpha
+            print len(lt_of_occ_alpha)
+    #print lt_of_num, lt_of_occ_beta, len(lt_of_occ_beta), lt_of_occ_alpha, len(lt_of_occ_alpha)
+    return dirac_mulliken_orbitals(lt_of_num,lt_of_sym,lt_of_energy,lt_of_occ_no,lt_of_character,lt_of_occ_alpha,lt_of_occ_beta)
 
 # end of the class and function definitions
 ##############################################################################################################################
@@ -133,4 +140,5 @@ else:
 
 # Reprocessing from raw data to organised standard output
 instance_MOs_lt=extract_and_process_raw_MOs(lines)    
+print instance_MOs_lt.num
 instance_MOs_lt.print_options()
