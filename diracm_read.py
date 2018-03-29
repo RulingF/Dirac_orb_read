@@ -29,24 +29,54 @@ class dirac_mulliken_orbitals:
         '''
 
         # set up the features of data that are being stored, can be better understood by comparing to a DIRAC Mulliken print
-        self.num=[] #list of the number of orbitals
-        self.sym=[] #list of the symmetries of orbitals
-        self.energy=[] #list of the energies of orbitals
-        self.occ_no=[] #list of the occupation number
-        self.character=[] #list of the orbital characters, with the orbital characters being a list of individual orbital components
-        self.occ_alpha=[] #list of the orbital occupationm, with the orbital occupation being a list of individual orbital components
-        self.occ_beta=[]
+        self.num=input_lt[0] #list of the number of orbitals
+        self.sym=input_lt[1] #list of the symmetries of orbitals
+        self.energy=input_lt[2] #list of the energies of orbitals
+        self.occ_no=input_lt[3] #list of the occupation number
+        self.character=input_lt[4] #list of the orbital characters, with the orbital characters being a list of individual orbital components
+        self.occ_alpha=input_lt[5] #list of the orbital occupationm, with the orbital occupation being a list of individual orbital components
+        self.occ_beta=input_lt[6]
         # group evergything
         self.group=[self.num,self.sym,self.energy,self.occ_no,self.character,self.occ_alpha,self.occ_beta]
-        # assign values
-        self.group=list(input_lt)
-    
-    def print_options(self):
+   
+    def print_all_orbitals(self):
         '''Print all of the variables in an order, num -> sym -> energy -> occ_no -> character -> occ
            This function needs to have more functionality.
+        ''' 
+        for num,sym,energy,occ_no,character_lt,occ_alpha_lt,occ_beta_lt in zip(self.num,self.sym,self.energy,self.occ_no,self.character,self.occ_alpha,self.occ_beta):
+            print num, sym, energy, occ_no
+            print character_lt
+            print occ_alpha_lt
+            print occ_beta_lt
+            print '\n\n'
+    def print_open_shells(self,thresh):
+        '''Print all of the variables of openshell orbitals in an order, num -> sym -> energy -> occ_no -> character -> occ
         '''
-        for a1,a2,a3,a4,a5,a6,a7 in zip(self.num,self.sym,self.energy,self.occ_no,self.character,self.occ_alpha,self.occ_beta):
-            print a1,a2,a3,a4,a5,a6,a7
+        for num,sym,energy,occ_no,character_lt,occ_alpha_lt,occ_beta_lt in zip(self.num,self.sym,self.energy,self.occ_no,self.character,self.occ_alpha,self.occ_beta):
+            if float(occ_no) < 1:
+                print "This is orbital no.%s with orbital energy: %s, and the symmetry is %s with occupation of %s." %(num,energy,sym,occ_no)
+                pt_lt = []
+                print "%-10s :" %('Character'),
+                for i in xrange(len(occ_alpha_lt)):
+                    if float(occ_alpha_lt[i]) > thresh:
+                        pt_lt.append(i)
+                for i in xrange(len(occ_beta_lt)):
+                    if float(occ_beta_lt[i]) > thresh:
+                        pt_lt.append(i)
+                for i in xrange(len(character_lt)):
+                    if i in pt_lt:
+                        print "%-15s  " %(character_lt[i]),
+                print ''
+                print "%-10s :" %('Alpha Occ'),
+                for i in xrange(len(occ_alpha_lt)):
+                    if i in pt_lt:
+                        print "%-15s  " %(occ_alpha_lt[i]),
+                print ''
+                print "%-10s :" %('Beta Occ'),
+                for i in xrange(len(occ_alpha_lt)):
+                    if i in pt_lt:
+                        print "%-15s  " %(occ_beta_lt[i]),
+                print '\n'
 def find_MOs(lines):
     """
     to find the start and end lines of a Mulliken orbital print in a molpro output, 
@@ -70,9 +100,8 @@ def extract_and_process_raw_MOs(txt):
     """
     indices_lt=find_MOs(txt)
     instance=[]
-    raw_MO = txt[indices_lt[0]-1:indices_lt[1]]
+    raw_MO = txt[indices_lt[0]-1:indices_lt[1]+1]
     MO_instance = process_one_raw_MOs(raw_MO)
-    print MO_instance.num
     return MO_instance
 
 def process_one_raw_MOs(txt):
@@ -86,11 +115,12 @@ def process_one_raw_MOs(txt):
     lt_of_character = []
     lt_of_occ_alpha = []
     lt_of_occ_beta = []
-    flag = 0
-    for line in txt[:100]:
+    flag = 0 #Read line control, when flag equals 2, append the charater and occ data.
+    for line in txt:
         line = line.replace('no.','no. ')
         line = line.strip()
         if "* Electronic eigenvalue" in line:
+            flag = flag + 1
             line_lt = line.split()
             lt_of_num.append(line_lt[line_lt.index('no.')+1].strip(':'))
             try:
@@ -98,27 +128,33 @@ def process_one_raw_MOs(txt):
             except ValueError:
                 lt_of_sym.append(line_lt[line_lt.index('m_j=')+1].strip())
             lt_of_energy.append(line_lt[line_lt.index('no.')+2].strip(':'))
-            lt_of_occ_no.append(line_lt[line_lt.index('f')+2].strip(':'))
+            lt_of_occ_no.append(line_lt[line_lt.index('f')+2].strip(')'))
         if "Gross" in line and "|" in line:
-            tmp_character_lt = []
             line_lt = filter(lambda x: x!='',line.split('|')[1].split('  '))
-            tmp_character_lt = tmp_character_lt + line_lt
+            try:
+                tmp_character_lt = tmp_character_lt + line_lt
+            except UnboundLocalError:
+                tmp_character_lt = []
         if "alpha" in line and "|" in line:
-            tmp_occ_alpha_lt = []
             line_lt = filter(lambda x: x!='',line.split('|')[1].split('  '))
-            tmp_occ_alpha_lt = tmp_occ_alpha_lt + line_lt
+            try:
+                tmp_occ_alpha_lt = tmp_occ_alpha_lt + line_lt
+            except UnboundLocalError:
+                tmp_occ_alpha_lt = []
         if "beta" in line and "|" in line:
-            tmp_occ_beta_lt = []
             line_lt = filter(lambda x: x!='',line.split('|')[1].split('  '))
-            tmp_occ_beta_lt = tmp_occ_beta_lt + line_lt
-        if flag == 2:
-            flag = 0
+            try:
+                tmp_occ_beta_lt = tmp_occ_beta_lt + line_lt
+            except UnboundLocalError:
+                tmp_occ_beta_lt = []
+        if flag == 2 or 'Total gross population' in line:
+            flag = flag - 1
             lt_of_character.append(tmp_character_lt)
             lt_of_occ_alpha.append(tmp_occ_alpha_lt)
             lt_of_occ_beta.append(tmp_occ_beta_lt)
-            print lt_of_occ_alpha
-            print len(lt_of_occ_alpha)
-    #print lt_of_num, lt_of_occ_beta, len(lt_of_occ_beta), lt_of_occ_alpha, len(lt_of_occ_alpha)
+            tmp_character_lt = []
+            tmp_occ_alpha_lt = []
+            tmp_occ_beta_lt = []
     return dirac_mulliken_orbitals(lt_of_num,lt_of_sym,lt_of_energy,lt_of_occ_no,lt_of_character,lt_of_occ_alpha,lt_of_occ_beta)
 
 # end of the class and function definitions
@@ -138,7 +174,8 @@ if len(sys.argv) > 2:
 else:
     thresh = float(raw_input("threshold(recommended value:0.05)> "))  # This threshold is for orbital occupation, when say 5f-2 occupation is greater than the threshold, it will be printed.
 
+print "This is only for openshell orbitals in Mulliken analysis, if you wish to print other orbitals(say,occupied ones or virtuals), pls contact me, frel.feng@wsu.edu"
 # Reprocessing from raw data to organised standard output
 instance_MOs_lt=extract_and_process_raw_MOs(lines)    
-print instance_MOs_lt.num
-instance_MOs_lt.print_options()
+#instance_MOs_lt.print_all_orbitals()
+instance_MOs_lt.print_open_shells(thresh)
