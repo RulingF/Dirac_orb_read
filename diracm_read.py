@@ -157,7 +157,10 @@ def process_one_raw_MOs(txt):
             try:
                 lt_of_sym.append(line_lt[line_lt.index('sym=')+1].strip())
             except ValueError:
-                lt_of_sym.append(line_lt[line_lt.index('m_j=')+1].strip())
+                try:
+                    lt_of_sym.append(line_lt[line_lt.index('m_j=')+1].strip())
+                except ValueError:
+                    lt_of_sym.append('nosym')
             lt_of_energy.append(line_lt[line_lt.index('no.')+2].strip(':'))
             lt_of_occ_no.append(line_lt[line_lt.index('f')+2].strip(')'))
         if "Gross" in line and "|" in line:
@@ -208,7 +211,10 @@ else:
 if len(sys.argv) > 3:
     no_of_virtuals = sys.argv[3]
 else:
-    no_of_virtuals = float(raw_input("number of virtual orbitals to print(default value is 0)> "))  #This is for virtual orbitals print option, if it is not given , then 0 is the default value 
+    try:
+        no_of_virtuals = float(raw_input("number of virtual orbitals to print(default value is 0)> "))  #This is for virtual orbitals print option, if it is not given , then 0 is the default value 
+    except ValueError:
+        no_of_virtuals = 0
 
 print "This is only for openshell orbitals in Mulliken analysis, if you wish to print other orbitals(say,occupied ones or virtuals), pls contact me, frel.feng@wsu.edu"
 # Reprocessing from raw data to organised standard output
