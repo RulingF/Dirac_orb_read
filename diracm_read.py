@@ -206,7 +206,10 @@ lines=txt.readlines()
 if len(sys.argv) > 2:
     thresh=sys.argv[2]
 else:
-    thresh = float(raw_input("threshold(recommended value:0.05)> "))  # This threshold is for orbital occupation, when say 5f-2 occupation is greater than the threshold, it will be printed.
+    try:
+        thresh = float(raw_input("threshold(default and recommended value:0.05)> "))  # This threshold is for orbital occupation, when say 5f-2 occupation is greater than the threshold, it will be printed.
+    except ValueError:
+        thresh = 0.05
 
 if len(sys.argv) > 3:
     no_of_virtuals = sys.argv[3]
