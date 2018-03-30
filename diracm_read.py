@@ -53,7 +53,7 @@ class dirac_mulliken_orbitals:
         '''Print all of the variables of openshell orbitals in an order, num -> sym -> energy -> occ_no -> character -> occ
         '''
         for num,sym,energy,occ_no,character_lt,occ_alpha_lt,occ_beta_lt in zip(self.num,self.sym,self.energy,self.occ_no,self.character,self.occ_alpha,self.occ_beta):
-            if float(occ_no) < 1:
+            if float(occ_no) < 1 and float(occ_no) > 0:
                 print "This is orbital no.%s with orbital energy: %s, and the symmetry is %s with occupation of %s." %(num,energy,sym,occ_no)
                 pt_lt = []
                 print "%-10s :" %('Character'),
@@ -77,6 +77,37 @@ class dirac_mulliken_orbitals:
                     if i in pt_lt:
                         print "%-15s  " %(occ_beta_lt[i]),
                 print '\n'
+    def print_virtual_shells(self,thresh,no_of_virtual = 0):
+        '''Print all of the variables of virtual(unoccupied) orbitals in an order, num -> sym -> energy -> occ_no -> character -> occ
+        '''
+        count = 0
+        for num,sym,energy,occ_no,character_lt,occ_alpha_lt,occ_beta_lt in zip(self.num,self.sym,self.energy,self.occ_no,self.character,self.occ_alpha,self.occ_beta):
+            if float(occ_no) == 0 and not (count > no_of_virtual):
+                count = count + 1
+                print "This is orbital no.%s with orbital energy: %s, and the symmetry is %s with occupation of %s." %(num,energy,sym,occ_no)
+                pt_lt = []
+                print "%-10s :" %('Character'),
+                for i in xrange(len(occ_alpha_lt)):
+                    if float(occ_alpha_lt[i]) > thresh:
+                        pt_lt.append(i) 
+                for i in xrange(len(occ_beta_lt)):
+                    if float(occ_beta_lt[i]) > thresh:
+                        pt_lt.append(i)
+                for i in xrange(len(character_lt)):
+                    if i in pt_lt:
+                        print "%-15s  " %(character_lt[i]),
+                print ''
+                print "%-10s :" %('Alpha Occ'),
+                for i in xrange(len(occ_alpha_lt)):
+                    if i in pt_lt:
+                        print "%-15s  " %(occ_alpha_lt[i]),
+                print ''
+                print "%-10s :" %('Beta Occ'),
+                for i in xrange(len(occ_alpha_lt)):
+                    if i in pt_lt:
+                        print "%-15s  " %(occ_beta_lt[i]),
+                print '\n'
+
 def find_MOs(lines):
     """
     to find the start and end lines of a Mulliken orbital print in a molpro output, 
@@ -174,8 +205,14 @@ if len(sys.argv) > 2:
 else:
     thresh = float(raw_input("threshold(recommended value:0.05)> "))  # This threshold is for orbital occupation, when say 5f-2 occupation is greater than the threshold, it will be printed.
 
+if len(sys.argv) > 3:
+    no_of_virtuals = sys.argv[3]
+else:
+    no_of_virtuals = float(raw_input("number of virtual orbitals to print(default value is 0)> "))  #This is for virtual orbitals print option, if it is not given , then 0 is the default value 
+
 print "This is only for openshell orbitals in Mulliken analysis, if you wish to print other orbitals(say,occupied ones or virtuals), pls contact me, frel.feng@wsu.edu"
 # Reprocessing from raw data to organised standard output
 instance_MOs_lt=extract_and_process_raw_MOs(lines)    
 #instance_MOs_lt.print_all_orbitals()
 instance_MOs_lt.print_open_shells(thresh)
+instance_MOs_lt.print_virtual_shells(thresh,no_of_virtuals)
