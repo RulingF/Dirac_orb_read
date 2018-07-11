@@ -164,7 +164,7 @@ def process_one_raw_MOs(txt):
             lt_of_energy.append(line_lt[line_lt.index('no.')+2].strip(':'))
             lt_of_occ_no.append(line_lt[line_lt.index('f')+2].strip(')'))
         if "Gross" in line and "|" in line:
-            line_lt = filter(lambda x: x!='',line.split('|')[1].split('  '))
+            line_lt = filter(lambda x: x!='',line.split('|')[1].split('   '))
             try:
                 tmp_character_lt = tmp_character_lt + line_lt
             except UnboundLocalError:
